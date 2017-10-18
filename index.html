@@ -1,0 +1,132 @@
+<html>
+	<head>
+		<title>K-means test</title>
+	</head>
+
+	<body>
+	
+		<h1>K-means test</h1>
+		<p>Just press F12 and fun.</p>
+		<pre class="prettyprint">
+			test(max_random_number, items_to_generate, number_of_clusters);
+		</pre>
+		
+		<p>or</p>
+		
+		<pre class="prettyprint">
+			var myItems = [35, 45, 123, 999, ...];
+			var machine = new Machine(myItems);
+			machine.run(6); //6 = number of clusters
+		</pre>
+		
+	
+		<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+		<script type="text/javascript">
+
+function Cluster(item){
+	this.items = [item];
+	this.mean = item;	
+	this.isChanged = true;
+}
+
+Cluster.prototype = {
+	refresh: function(){
+		var newMean = this.items.reduce(function(p,c){return p+c;},0) / this.items.length;
+		this.isChanged = newMean !== this.mean;
+		this.mean = newMean;
+	},
+	
+	centroid: function(value){
+		return Math.abs(this.mean - value);
+	},
+	
+	add: function(value){
+		this.items.push(value);
+	},
+	
+	clean: function(){
+		this.items = [];
+	}
+};
+
+function Machine(items){
+	this.items = items;
+	this.clusters = [];
+	this.iterations = 0;
+}
+
+Machine.prototype = {
+	create: function(total){
+		var i = 0,
+			len = this.items.length;
+		this.clusters = [];
+		for(;i<total;i++){
+			this.clusters.push(new Cluster(this.items[i]));
+		}
+	},
+	findCluster: function(item){
+		var clusterIndex = -1,
+			min = 0,
+			cur=0;
+			
+		this.clusters.forEach(function(cluster, index){
+			cur = cluster.centroid(item);
+			if(cur < min || clusterIndex === -1){
+				min = cur;
+				clusterIndex = index;
+			}
+		});
+		
+		this.clusters[clusterIndex].add(item);
+	},
+	hasChanged: function(){
+		var i=0,
+			len=this.clusters.length;
+			
+		for(;i<len;i++){
+			if(this.clusters[i].isChanged){
+				return true;
+			}
+		}
+		return false;
+	},
+	rearrange: function(){
+		var self = this;
+		this.items.forEach(function(item){
+			self.findCluster(item);
+		});
+	},
+	clean: function (){
+		this.clusters.forEach(function(c){c.clean();});
+	},
+	refresh: function (){
+		this.clusters.forEach(function(c){c.refresh();});
+	},
+	run: function(total){
+		this.create(total);
+		this.iterations = 0;
+		while(this.hasChanged()){
+			this.clean();
+			this.rearrange();
+			this.refresh();
+			this.iterations++;
+		}		
+	}
+};
+
+function test(max, len, qtt){
+'use strict';
+	
+	var items = [];
+	for(var i=0; i<len; i++){items.push(Math.floor(Math.random()*max));}
+
+	var machine = new Machine(items);
+	machine.run(qtt);
+	
+	return machine;
+}
+
+console.dir(test(9999,100,6));
+		</script>
+	</body>
+</html>
